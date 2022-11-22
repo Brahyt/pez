@@ -2,6 +2,7 @@
 
 require 'aws-sdk-sqs'
 require 'aws-sdk-sts'
+require 'debug'
 
 # Pez is used to work with SQS on Aws
 class Pez
@@ -17,7 +18,7 @@ class Pez
       puts "#{key}: #{value}"
     end
   rescue StandardError => e
-    puts "Error getting queue attributes: #{e.message}"
+    puts e.message
   end
 
   def send_message(message_body, message_group_id)
@@ -27,7 +28,28 @@ class Pez
       message_group_id: message_group_id
     )
   rescue StandardError
-    false
+    puts e.message
+  end
+
+  def receive_messages(count)
+    return false if count > 10
+
+    sqs_client
+      .receive_message({
+                         queue_url: queue_url,
+                         attribute_names: ['All'],
+                         max_number_of_messages: count
+                       })
+  end
+
+  def next_message; end
+
+  def delete_message(message_identifier); end
+
+  def pop_message
+    next_message
+
+    delete_message(message_identifier)
   end
 
   private
@@ -52,9 +74,3 @@ class Pez
     "https://sqs.#{region}.amazonaws.com/#{sts_client.get_caller_identity.account}/#{queue_name}"
   end
 end
-
-pez = Pez.new
-
-pez.send_message('Hey now', 1)
-pez.list_queue_attributes
-
