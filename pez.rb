@@ -7,6 +7,29 @@ require 'aws-sdk-sts'
 class Pez
   def initialize; end
 
+  def list_queue_attributes
+    attributes = sqs_client.get_queue_attributes(
+      queue_url: queue_url,
+      attribute_names: ['All']
+    )
+
+    attributes.attributes.each do |key, value|
+      puts "#{key}: #{value}"
+    end
+  rescue StandardError => e
+    puts "Error getting queue attributes: #{e.message}"
+  end
+
+  def send_message(message_body, message_group_id)
+    sqs_client.send_message(
+      queue_url: queue_url,
+      message_body: message_body,
+      message_group_id: message_group_id
+    )
+  rescue StandardError
+    false
+  end
+
   private
 
   def sqs_client
@@ -30,4 +53,8 @@ class Pez
   end
 end
 
-Pez.go
+pez = Pez.new
+
+pez.send_message('Hey now', 1)
+pez.list_queue_attributes
+
