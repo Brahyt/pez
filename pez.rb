@@ -42,14 +42,24 @@ class Pez
                        })
   end
 
-  def next_message; end
+  def next_message
+    receive_messages(1)
+  end
 
-  def delete_message(message_identifier); end
+  def delete_message(receipt_handle)
+    sqs_client
+      .delete_message({
+                        queue_url: queue_url,
+                        receipt_handle: receipt_handle
+                      })
+  end
 
   def pop_message
-    next_message
+    message = next_message
 
-    delete_message(message_identifier)
+    delete_message(message.messages[0].receipt_handle)
+
+    message
   end
 
   private
